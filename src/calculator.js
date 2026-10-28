@@ -1,6 +1,7 @@
 'use strict';
 
-// Supported operations: addition, subtraction, multiplication, and division.
+// Supported operations: addition, subtraction, multiplication, division, modulo,
+// exponentiation, and square root.
 function assertFiniteNumber(value, name) {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     throw new TypeError(`${name} must be a finite number`);
@@ -34,25 +35,50 @@ function divide(a, b) {
   return a / b;
 }
 
-const operations = { add, subtract, multiply, divide };
+function modulo(a, b) {
+  assertFiniteNumber(a, 'First operand');
+  assertFiniteNumber(b, 'Second operand');
+  if (b === 0) {
+    throw new RangeError('Cannot calculate modulo with a zero divisor');
+  }
+  return a % b;
+}
+
+function power(base, exponent) {
+  assertFiniteNumber(base, 'Base');
+  assertFiniteNumber(exponent, 'Exponent');
+  return base ** exponent;
+}
+
+function squareRoot(n) {
+  assertFiniteNumber(n, 'Operand');
+  if (n < 0) {
+    throw new RangeError('Cannot calculate the square root of a negative number');
+  }
+  return Math.sqrt(n);
+}
+
+const binaryOperations = { add, subtract, multiply, divide, modulo, power };
+const unaryOperations = { squareRoot };
 
 function runCli(args) {
-  const [operation, first, second, ...extra] = args;
-  const calculate = operations[operation];
+  const [operation, ...rawOperands] = args;
+  const calculate = binaryOperations[operation] || unaryOperations[operation];
+  const expectedOperands = unaryOperations[operation] ? 1 : 2;
 
-  if (!calculate || first === undefined || second === undefined || extra.length > 0) {
+  if (!calculate || rawOperands.length !== expectedOperands) {
     throw new Error(
-      'Usage: node src/calculator.js <add|subtract|multiply|divide> <number> <number>'
+      'Usage: node src/calculator.js <add|subtract|multiply|divide|modulo|power> <number> <number> ' +
+      'or <squareRoot> <number>'
     );
   }
 
-  const a = Number(first);
-  const b = Number(second);
-  if (first.trim() === '' || second.trim() === '' || !Number.isFinite(a) || !Number.isFinite(b)) {
+  const operands = rawOperands.map(Number);
+  if (rawOperands.some((value) => value.trim() === '') || operands.some((value) => !Number.isFinite(value))) {
     throw new TypeError('Operands must be finite numbers');
   }
 
-  return calculate(a, b);
+  return calculate(...operands);
 }
 
 if (require.main === module) {
@@ -64,4 +90,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { add, subtract, multiply, divide };
+module.exports = { add, subtract, multiply, divide, modulo, power, squareRoot };
